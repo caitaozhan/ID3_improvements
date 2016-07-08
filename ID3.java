@@ -187,41 +187,25 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		for (int i = 0; i < m_forestSize; i++)        // build a random forest with m_forestSize trees
 		{
 			m_datas[i] = new Instances(data);
-			deleteSomeInstances(m_datas[i], (int) (data.numInstances() * 0.2));
-			deleteSomeAttributes(m_datas[i], (int) ((data.numAttributes() - 1) * 0.2));
-			
-			m_datas[i] =  new Instances(m_datas[i]);  // 把 objects数组中的null元素去掉 
+			deleteSomeAttributes(m_datas[i], (int) ((data.numAttributes()) * 0.2));
+
+			m_datas[i] = new Instances(m_datas[i]);  // 把 objects数组中的null元素去掉 
 			m_randomForest[i] = new ID3();
 			m_randomForest[i].makeTree(m_datas[i]);
 		}
 	}
 
 	/**
-	 * delete number instances in data
+	 * create a subfield of Original Attributes
 	 * 
-	 * @param data   delete some instances from data
-	 * @param number delete how many instances 
+	 * @param data    original training data
+	 * @param number  number of attributes that will be deleted
 	 */
-	private void deleteSomeInstances(Instances data, int number)
-	{
-		if (number >= data.numInstances())  // 删除的实例的个数，应该 < data 里面实例的总数
-			return;
-		else if (number == 0)                    // 至少删除一个
-			number = 1;
-		
-		int index;
-		for (int i = 0; i < number; i++)
-		{
-			index = (int) (Math.random() * data.numInstances());
-			data.delete(index);
-		}
-	}
-
 	private void deleteSomeAttributes(Instances data, int number)
 	{
-		if (number >= data.numAttributes() - 1)     // 删除的属性的个数，应该 < data 里面属性的总个数
+		if (number >= data.numAttributes() - 1)   // 删除的属性的个数number的上限=data所有属性的个数减1（这个1是指类标签）
 			return;
-		else if (number == 0)                       // 至少删除一个
+		else if (number == 0)                     // 至少删除一个
 			number = 1;
 
 		int index;
@@ -229,8 +213,8 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		{
 			do
 			{
-				index = (int) (Math.random() * (data.numAttributes()));  
-			} while (index == data.classIndex());   // cannot delete class label
+				index = (int) (Math.random() * (data.numAttributes()));
+			} while (index == data.classIndex()); // cannot delete class label
 			data.deleteAttributeAt(index);
 		}
 	}
@@ -325,19 +309,12 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 	 */
 	public double[] distributionForInstance(Instance instance) throws NoSupportForMissingValuesException
 	{
-
-		if (instance.hasMissingValue())
+		for (int i = 0; i < m_forestSize; i++)
 		{
-			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
+			double classPred = m_randomForest[i].classifyInstance(instance);
+			m_Distribution[(int) classPred]++;
 		}
-		if (m_Attribute == null)
-		{
-			return m_Distribution;
-		}
-		else
-		{
-			return m_Successors[(int) instance.value(m_Attribute)].distributionForInstance(instance);
-		}
+		return m_Distribution;
 	}
 
 	/**
