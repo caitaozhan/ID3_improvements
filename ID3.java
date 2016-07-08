@@ -38,6 +38,8 @@ import weka.core.TechnicalInformation.Type;
 
 import java.util.Enumeration;
 
+import com.sun.corba.se.impl.javax.rmi.CORBA.Util;
+
 /**
  <!-- globalinfo-start -->
  * Class for constructing an unpruned decision tree based on the ID3 algorithm. 
@@ -98,6 +100,14 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	/** Class attribute of dataset. */
 	private Attribute m_ClassAttribute;
 
+	/** Random forest contains several decision trees. */
+	private ID3[] m_randomForest;
+	
+	/** Each tree in a forest should hold a different data set. */
+	private Instances m_datas[];
+	
+	/** How many trees in a forest. */
+	private int m_forestSize = 10;
 	/**
 	 * Returns a string describing the classifier.
 	 * @return a description suitable for the GUI.
@@ -173,10 +183,55 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		// remove instances with missing class
 		data = new Instances(data);
 		data.deleteWithMissingClass();
+		
+		// data.delete(random);
+		
+		// data.deleteAttributeAt(random);
+		
+		m_randomForest = new ID3[m_forestSize];    
+		m_datas = new Instances[m_forestSize];
+		for (int i = 0; i < m_forestSize; i++)     // build a random forest with m_forestSize trees
+		{
+			m_datas[i] = new Instances(data);
+			
+			deleteSomeInstances(m_datas[i], (int) (data.numInstances() * 0.8));
+			deleteSomeAttributes(m_datas[i], (int) (data.numAttributes() * 0.8));
+			
+			m_randomForest[i].makeTree(m_datas[i]);
+		}
+	}
+	
+	/**
+	 * delete number instances in data
+	 * 
+	 * @param data   delete some instances from data
+	 * @param number delete how many instances 
+	 */
+	private void deleteSomeInstances(Instances data, int number)
+	{
+		if (number >= data.numInstances())  // 删除的实例的个数，应该 < data 里面实例的总数
+			return;
 
-		makeTree(data);
+		int index;		for (int i = 0; i < number; i++)
+		{
+			index = (int)(Math.random() * data.numInstances());
+			data.delete(index);
+		}
 	}
 
+	private void deleteSomeAttributes(Instances data, int number)
+	{
+		if (number >= data.numAttributes())  // 删除的属性的个数，应该 < data 里面属性的总个数
+			return;
+		
+		int index;
+		for (int i = 0; i < number; i++)
+		{
+			index = (int)(Math.random() * data.numAttributes());
+			data.deleteAttributeAt(index);
+		}
+	}
+	
 	/**
 	 * Method for building an Id3 tree.
 	 *
