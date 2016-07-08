@@ -99,8 +99,8 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 	private Attribute m_ClassAttribute;
 
 	/** the tree can grow at most this many levels. */
-	private int m_depthLimit;
-	
+	private int m_depthLimit = 5;      // surprised to find there is no constructor
+	                                   // so I just initialize m_depthLimit right here
 	/** a leaf node holds a NB instance, used for local optimization. */
 	private NB m_naiveBayes;
 
@@ -177,14 +177,13 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		data = new Instances(data);
 		data.deleteWithMissingClass();
 
-		m_depthLimit = 3;       // 深度到底应该等于多少，可以研究
 		int depth = 0;          // 长树的时候，限制深度
 
 		makeTree(data, depth);
 	}
 
 	/**
-	 * Method for building an Id3 tree.
+	 * Method for building an Id3 tree with naive bayes optimization at leaf
 	 *
 	 * @param data the training data
 	 * @exception Exception if decision tree can't be built successfully
@@ -206,7 +205,6 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		if (depth == m_depthLimit)  
 		{
 			m_Attribute = null;
-			m_ClassValue = Utils.maxIndex(m_Distribution);
 			m_ClassAttribute = data.classAttribute();
 			
 			m_naiveBayes = new NB();
@@ -228,7 +226,6 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		if (Utils.eq(infoGains[m_Attribute.index()], 0))
 		{
 			m_Attribute = null;
-			m_ClassValue = Utils.maxIndex(m_Distribution);
 			m_ClassAttribute = data.classAttribute();
 			
 			m_naiveBayes = new NB();
@@ -284,7 +281,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		{
 			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
 		}
-		if (m_Attribute == null && m_naiveBayes == null)
+		if (m_Attribute == null && m_naiveBayes == null)      // 空叶节点，造成 unclassified instances
 		{
 			return m_Distribution;
 		}
@@ -293,6 +290,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 			try
 			{
 				m_Distribution = m_naiveBayes.distributionForInstance(instance);
+				m_ClassValue = Utils.maxIndex(m_Distribution);
 				return m_Distribution;
 			}
 			catch (Exception e)
