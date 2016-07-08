@@ -293,9 +293,16 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		{
 			return m_ClassValue;
 		}
-		else
-		{// TODO 这里数组越界，原因估计是 ID3 tree 中删除了一些属性？
-			return m_Successors[(int) instance.value(m_Attribute)].classifyInstance(instance);
+		else  // 这里出现了数组越界BUG，花了很长时间解决了。原因是 ID3 tree 中删除了一些属性之后
+		{	  // instance的属性下标和datas[i]的属性下标不一致。根源在于，每一个instance对应一个data集，这里data集不一样了。。。
+			int attIndexOfInstance;
+			String attNameOfDatai = m_Attribute.name();
+			for (attIndexOfInstance = 0; attIndexOfInstance < instance.numAttributes(); attIndexOfInstance++)
+			{
+				if(instance.attribute(attIndexOfInstance).name() == attNameOfDatai)
+					break;
+			}
+			return m_Successors[(int) instance.value(attIndexOfInstance)].classifyInstance(instance);
 		}
 	}
 
@@ -316,8 +323,43 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		}
 		Utils.normalize(m_Distribution);
 		return m_Distribution;
+		
+		/*double[] m_Distribution_2 = new double[instance.numClasses()];
+		double[] m_Distribution = new double[instance.numClasses()];
+		for (int i = 0; i < m_forestSize; i++)
+		{
+			m_Distribution_2 = m_randomForest[i].distributionForInstance_2(instance);
+			int pred = Utils.maxIndex(m_Distribution_2);
+			m_Distribution[(int) pred]++;
+		}
+		return m_Distribution;*/
 	}
 
+	
+	/**
+	 * Computes class distribution for instance using decision tree.
+	 *
+	 * @param instance the instance for which distribution is to be computed
+	 * @return the class distribution for the given instance
+	 * @throws NoSupportForMissingValuesException if instance has missing values
+	 */
+	/*public double[] distributionForInstance_2(Instance instance) throws NoSupportForMissingValuesException
+	{
+
+		if (instance.hasMissingValue())
+		{
+			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
+		}
+		if (m_Attribute == null)
+		{
+			return m_Distribution;
+		}
+		else
+		{
+			return m_Successors[(int) instance.value(m_Attribute)].distributionForInstance(instance);
+		}
+	}*/
+	
 	/**
 	 * Prints the decision tree using the private toString method from below.
 	 *
