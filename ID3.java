@@ -98,6 +98,12 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 	/** Class attribute of dataset. */
 	private Attribute m_ClassAttribute;
 
+	/** the tree can grow at most this many levels. */
+	private int m_depthLimit;
+	
+	/** a leaf node holds a NB instance, used for local optimization. */
+	private NB m_naiveBayes;
+
 	/**
 	 * Returns a string describing the classifier.
 	 * @return a description suitable for the GUI.
@@ -171,7 +177,10 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		data = new Instances(data);
 		data.deleteWithMissingClass();
 
-		makeTree(data);
+		m_depthLimit = 3;       // 深度到底应该等于多少，可以研究
+		int depth = 0;          // 长树的时候，限制深度
+
+		makeTree(data, depth);
 	}
 
 	/**
@@ -181,18 +190,30 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 	 * @exception Exception if decision tree can't be built successfully
 	 */
 	@SuppressWarnings("rawtypes")
-	private void makeTree(Instances data) throws Exception
+	private void makeTree(Instances data, int depth) throws Exception
 	{
-
 		// Check if no instances have reached this node.
 		if (data.numInstances() == 0)
 		{
 			m_Attribute = null;
+			m_naiveBayes = null;
 			m_ClassValue = Instance.missingValue();
 			m_Distribution = new double[data.numClasses()];
 			return;
 		}
-
+		
+		// make leaf if current depth reaches the depth limit
+		if (depth == m_depthLimit)  
+		{
+			m_Attribute = null;
+			m_ClassValue = Utils.maxIndex(m_Distribution);
+			m_ClassAttribute = data.classAttribute();
+			
+			m_naiveBayes = new NB();
+			m_naiveBayes.buildClassifier(data);
+			return;
+		}
+		
 		// Compute attribute with maximum information gain.
 		double[] infoGains = new double[data.numAttributes()];
 		Enumeration attEnum = data.enumerateAttributes();
@@ -203,21 +224,15 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		}
 		m_Attribute = data.attribute(Utils.maxIndex(infoGains));
 
-		// Make leaf if information gain is zero. 
-		// Otherwise create successors.
+		// Make leaf if information gain is zero.  Otherwise create successors.
 		if (Utils.eq(infoGains[m_Attribute.index()], 0))
 		{
 			m_Attribute = null;
-			m_Distribution = new double[data.numClasses()];
-			Enumeration instEnum = data.enumerateInstances();
-			while (instEnum.hasMoreElements())
-			{
-				Instance inst = (Instance) instEnum.nextElement();
-				m_Distribution[(int) inst.classValue()]++;
-			}
-			Utils.normalize(m_Distribution);
 			m_ClassValue = Utils.maxIndex(m_Distribution);
 			m_ClassAttribute = data.classAttribute();
+			
+			m_naiveBayes = new NB();
+			m_naiveBayes.buildClassifier(data);
 		}
 		else
 		{
@@ -226,7 +241,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 			for (int j = 0; j < m_Attribute.numValues(); j++)
 			{
 				m_Successors[j] = new ID3();
-				m_Successors[j].makeTree(splitData[j]);
+				m_Successors[j].makeTree(splitData[j], depth + 1);  // 深度加一
 			}
 		}
 	}
@@ -269,9 +284,22 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		{
 			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
 		}
-		if (m_Attribute == null)
+		if (m_Attribute == null && m_naiveBayes == null)
 		{
 			return m_Distribution;
+		}
+		else if(m_Attribute == null && m_naiveBayes != null)  // 在局部进行朴素贝叶斯分类
+		{
+			try
+			{
+				m_Distribution = m_naiveBayes.distributionForInstance(instance);
+				return m_Distribution;
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+			return null;
 		}
 		else
 		{
