@@ -77,7 +77,7 @@ import java.util.Enumeration;
  * @author Caitao Zhan (caitaozhan@163.com)
  * @version $Revision: 6404 $ 
  */
-public class ID3 extends Classifier implements TechnicalInformationHandler,	Sourcable
+public class ID3 extends Classifier implements TechnicalInformationHandler, Sourcable
 {
 
 	/** for serialization */
@@ -105,11 +105,8 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	public String globalInfo()
 	{
 
-		return "Class for constructing an unpruned decision tree based on the ID3 "
-				+ "algorithm. Can only deal with nominal attributes. No missing values "
-				+ "allowed. Empty leaves may result in unclassified instances. For more "
-				+ "information see: \n\n"
-				+ getTechnicalInformation().toString();
+		return "Class for constructing an unpruned decision tree based on the ID3 " + "algorithm. Can only deal with nominal attributes. No missing values "
+				+ "allowed. Empty leaves may result in unclassified instances. For more " + "information see: \n\n" + getTechnicalInformation().toString();
 	}
 
 	/**
@@ -241,14 +238,12 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	 * @return the classification
 	 * @throws NoSupportForMissingValuesException if instance has missing values
 	 */
-	public double classifyInstance(Instance instance)
-			throws NoSupportForMissingValuesException
+	public double classifyInstance(Instance instance) throws NoSupportForMissingValuesException
 	{
 
 		if (instance.hasMissingValue())
 		{
-			throw new NoSupportForMissingValuesException(
-					"Id3: no missing values, " + "please.");
+			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
 		}
 		if (m_Attribute == null)
 		{
@@ -256,8 +251,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		}
 		else
 		{
-			return m_Successors[(int) instance.value(m_Attribute)]
-					.classifyInstance(instance);
+			return m_Successors[(int) instance.value(m_Attribute)].classifyInstance(instance);
 		}
 	}
 
@@ -268,14 +262,12 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	 * @return the class distribution for the given instance
 	 * @throws NoSupportForMissingValuesException if instance has missing values
 	 */
-	public double[] distributionForInstance(Instance instance)
-			throws NoSupportForMissingValuesException
+	public double[] distributionForInstance(Instance instance) throws NoSupportForMissingValuesException
 	{
 
 		if (instance.hasMissingValue())
 		{
-			throw new NoSupportForMissingValuesException(
-					"Id3: no missing values, " + "please.");
+			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
 		}
 		if (m_Attribute == null)
 		{
@@ -283,8 +275,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		}
 		else
 		{
-			return m_Successors[(int) instance.value(m_Attribute)]
-					.distributionForInstance(instance);
+			return m_Successors[(int) instance.value(m_Attribute)].distributionForInstance(instance);
 		}
 	}
 
@@ -320,8 +311,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		{
 			if (splitData[j].numInstances() > 0)
 			{
-				infoGain -= ((double) splitData[j].numInstances() / (double) data
-						.numInstances()) * computeEntropy(splitData[j]);
+				infoGain -= ((double) splitData[j].numInstances() / (double) data.numInstances()) * computeEntropy(splitData[j]);
 			}
 		}
 		return infoGain;
@@ -440,8 +430,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		StringBuffer[] subBuffers;
 
 		buffer.append("\n");
-		buffer.append("  protected static double node" + id
-				+ "(Object[] i) {\n");
+		buffer.append("  protected static double node" + id + "(Object[] i) {\n");
 
 		// leaf?
 		if (m_Attribute == null)
@@ -457,16 +446,14 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 			}
 			if (m_ClassAttribute != null)
 			{
-				buffer.append(" // "
-						+ m_ClassAttribute.value((int) m_ClassValue));
+				buffer.append(" // " + m_ClassAttribute.value((int) m_ClassValue));
 			}
 			buffer.append("\n");
 			buffer.append("  }\n");
 		}
 		else
 		{
-			buffer.append("    checkMissing(i, " + m_Attribute.index()
-					+ ");\n\n");
+			buffer.append("    checkMissing(i, " + m_Attribute.index() + ");\n\n");
 			buffer.append("    // " + m_Attribute.name() + "\n");
 
 			// subtree calls
@@ -481,16 +468,14 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 				{
 					buffer.append("else ");
 				}
-				buffer.append("if (((String) i[" + m_Attribute.index()
-						+ "]).equals(\"" + m_Attribute.value(i) + "\"))\n");
+				buffer.append("if (((String) i[" + m_Attribute.index() + "]).equals(\"" + m_Attribute.value(i) + "\"))\n");
 				buffer.append("      return node" + newID + "(i);\n");
 
 				subBuffers[i] = new StringBuffer();
 				newID = m_Successors[i].toSource(newID, subBuffers[i]);
 			}
 			buffer.append("    else\n");
-			buffer.append("      throw new IllegalArgumentException(\"Value '\" + i["
-					+ m_Attribute.index() + "] + \"' is not allowed!\");\n");
+			buffer.append("      throw new IllegalArgumentException(\"Value '\" + i[" + m_Attribute.index() + "] + \"' is not allowed!\");\n");
 			buffer.append("  }\n");
 
 			// output subtree code
@@ -533,8 +518,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		result.append("class " + className + " {\n");
 		result.append("  private static void checkMissing(Object[] i, int index) {\n");
 		result.append("    if (i[index] == null)\n");
-		result.append("      throw new IllegalArgumentException(\"Null values "
-				+ "are not allowed!\");\n");
+		result.append("      throw new IllegalArgumentException(\"Null values " + "are not allowed!\");\n");
 		result.append("  }\n\n");
 		result.append("  public static double classify(Object[] i) {\n");
 		id = 0;
