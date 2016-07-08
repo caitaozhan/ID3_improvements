@@ -38,7 +38,6 @@ import weka.core.TechnicalInformation.Type;
 
 import java.util.Enumeration;
 
-import com.sun.corba.se.impl.javax.rmi.CORBA.Util;
 
 /**
  <!-- globalinfo-start -->
@@ -295,7 +294,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 			return m_ClassValue;
 		}
 		else
-		{
+		{// TODO 这里数组越界，原因估计是 ID3 tree 中删除了一些属性？
 			return m_Successors[(int) instance.value(m_Attribute)].classifyInstance(instance);
 		}
 	}
@@ -309,11 +308,13 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 	 */
 	public double[] distributionForInstance(Instance instance) throws NoSupportForMissingValuesException
 	{
+		m_Distribution = new double[instance.numClasses()];
 		for (int i = 0; i < m_forestSize; i++)
 		{
 			double classPred = m_randomForest[i].classifyInstance(instance);
 			m_Distribution[(int) classPred]++;
 		}
+		Utils.normalize(m_Distribution);
 		return m_Distribution;
 	}
 
