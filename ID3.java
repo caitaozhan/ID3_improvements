@@ -79,7 +79,7 @@ import com.sun.corba.se.impl.javax.rmi.CORBA.Util;
  * @author Caitao Zhan (caitaozhan@163.com)
  * @version $Revision: 6404 $ 
  */
-public class ID3 extends Classifier implements TechnicalInformationHandler,	Sourcable
+public class ID3 extends Classifier implements TechnicalInformationHandler, Sourcable
 {
 
 	/** for serialization */
@@ -102,12 +102,13 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 
 	/** Random forest contains several decision trees. */
 	private ID3[] m_randomForest;
-	
+
 	/** Each tree in a forest should hold a different data set. */
 	private Instances m_datas[];
-	
+
 	/** How many trees in a forest. */
 	private int m_forestSize = 10;
+
 	/**
 	 * Returns a string describing the classifier.
 	 * @return a description suitable for the GUI.
@@ -115,11 +116,8 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	public String globalInfo()
 	{
 
-		return "Class for constructing an unpruned decision tree based on the ID3 "
-				+ "algorithm. Can only deal with nominal attributes. No missing values "
-				+ "allowed. Empty leaves may result in unclassified instances. For more "
-				+ "information see: \n\n"
-				+ getTechnicalInformation().toString();
+		return "Class for constructing an unpruned decision tree based on the ID3 " + "algorithm. Can only deal with nominal attributes. No missing values "
+				+ "allowed. Empty leaves may result in unclassified instances. For more " + "information see: \n\n" + getTechnicalInformation().toString();
 	}
 
 	/**
@@ -183,24 +181,21 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		// remove instances with missing class
 		data = new Instances(data);
 		data.deleteWithMissingClass();
-		
-		// data.delete(random);
-		
-		// data.deleteAttributeAt(random);
-		
-		m_randomForest = new ID3[m_forestSize];    
+
+		m_randomForest = new ID3[m_forestSize];
 		m_datas = new Instances[m_forestSize];
-		for (int i = 0; i < m_forestSize; i++)     // build a random forest with m_forestSize trees
+		for (int i = 0; i < m_forestSize; i++)        // build a random forest with m_forestSize trees
 		{
 			m_datas[i] = new Instances(data);
+			deleteSomeInstances(m_datas[i], (int) (data.numInstances() * 0.2));
+			deleteSomeAttributes(m_datas[i], (int) ((data.numAttributes() - 1) * 0.2));
 			
-			deleteSomeInstances(m_datas[i], (int) (data.numInstances() * 0.8));
-			deleteSomeAttributes(m_datas[i], (int) (data.numAttributes() * 0.8));
-			
+			m_datas[i] =  new Instances(m_datas[i]);  // 把 objects数组中的null元素去掉 
+			m_randomForest[i] = new ID3();
 			m_randomForest[i].makeTree(m_datas[i]);
 		}
 	}
-	
+
 	/**
 	 * delete number instances in data
 	 * 
@@ -211,27 +206,35 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	{
 		if (number >= data.numInstances())  // 删除的实例的个数，应该 < data 里面实例的总数
 			return;
-
-		int index;		for (int i = 0; i < number; i++)
+		else if (number == 0)                    // 至少删除一个
+			number = 1;
+		
+		int index;
+		for (int i = 0; i < number; i++)
 		{
-			index = (int)(Math.random() * data.numInstances());
+			index = (int) (Math.random() * data.numInstances());
 			data.delete(index);
 		}
 	}
 
 	private void deleteSomeAttributes(Instances data, int number)
 	{
-		if (number >= data.numAttributes())  // 删除的属性的个数，应该 < data 里面属性的总个数
+		if (number >= data.numAttributes() - 1)     // 删除的属性的个数，应该 < data 里面属性的总个数
 			return;
-		
+		else if (number == 0)                       // 至少删除一个
+			number = 1;
+
 		int index;
 		for (int i = 0; i < number; i++)
 		{
-			index = (int)(Math.random() * data.numAttributes());
+			do
+			{
+				index = (int) (Math.random() * (data.numAttributes()));  
+			} while (index == data.classIndex());   // cannot delete class label
 			data.deleteAttributeAt(index);
 		}
 	}
-	
+
 	/**
 	 * Method for building an Id3 tree.
 	 *
@@ -296,14 +299,12 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	 * @return the classification
 	 * @throws NoSupportForMissingValuesException if instance has missing values
 	 */
-	public double classifyInstance(Instance instance)
-			throws NoSupportForMissingValuesException
+	public double classifyInstance(Instance instance) throws NoSupportForMissingValuesException
 	{
 
 		if (instance.hasMissingValue())
 		{
-			throw new NoSupportForMissingValuesException(
-					"Id3: no missing values, " + "please.");
+			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
 		}
 		if (m_Attribute == null)
 		{
@@ -311,8 +312,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		}
 		else
 		{
-			return m_Successors[(int) instance.value(m_Attribute)]
-					.classifyInstance(instance);
+			return m_Successors[(int) instance.value(m_Attribute)].classifyInstance(instance);
 		}
 	}
 
@@ -323,14 +323,12 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 	 * @return the class distribution for the given instance
 	 * @throws NoSupportForMissingValuesException if instance has missing values
 	 */
-	public double[] distributionForInstance(Instance instance)
-			throws NoSupportForMissingValuesException
+	public double[] distributionForInstance(Instance instance) throws NoSupportForMissingValuesException
 	{
 
 		if (instance.hasMissingValue())
 		{
-			throw new NoSupportForMissingValuesException(
-					"Id3: no missing values, " + "please.");
+			throw new NoSupportForMissingValuesException("Id3: no missing values, " + "please.");
 		}
 		if (m_Attribute == null)
 		{
@@ -338,8 +336,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		}
 		else
 		{
-			return m_Successors[(int) instance.value(m_Attribute)]
-					.distributionForInstance(instance);
+			return m_Successors[(int) instance.value(m_Attribute)].distributionForInstance(instance);
 		}
 	}
 
@@ -375,8 +372,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		{
 			if (splitData[j].numInstances() > 0)
 			{
-				infoGain -= ((double) splitData[j].numInstances() / (double) data
-						.numInstances()) * computeEntropy(splitData[j]);
+				infoGain -= ((double) splitData[j].numInstances() / (double) data.numInstances()) * computeEntropy(splitData[j]);
 			}
 		}
 		return infoGain;
@@ -495,8 +491,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		StringBuffer[] subBuffers;
 
 		buffer.append("\n");
-		buffer.append("  protected static double node" + id
-				+ "(Object[] i) {\n");
+		buffer.append("  protected static double node" + id + "(Object[] i) {\n");
 
 		// leaf?
 		if (m_Attribute == null)
@@ -512,16 +507,14 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 			}
 			if (m_ClassAttribute != null)
 			{
-				buffer.append(" // "
-						+ m_ClassAttribute.value((int) m_ClassValue));
+				buffer.append(" // " + m_ClassAttribute.value((int) m_ClassValue));
 			}
 			buffer.append("\n");
 			buffer.append("  }\n");
 		}
 		else
 		{
-			buffer.append("    checkMissing(i, " + m_Attribute.index()
-					+ ");\n\n");
+			buffer.append("    checkMissing(i, " + m_Attribute.index() + ");\n\n");
 			buffer.append("    // " + m_Attribute.name() + "\n");
 
 			// subtree calls
@@ -536,16 +529,14 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 				{
 					buffer.append("else ");
 				}
-				buffer.append("if (((String) i[" + m_Attribute.index()
-						+ "]).equals(\"" + m_Attribute.value(i) + "\"))\n");
+				buffer.append("if (((String) i[" + m_Attribute.index() + "]).equals(\"" + m_Attribute.value(i) + "\"))\n");
 				buffer.append("      return node" + newID + "(i);\n");
 
 				subBuffers[i] = new StringBuffer();
 				newID = m_Successors[i].toSource(newID, subBuffers[i]);
 			}
 			buffer.append("    else\n");
-			buffer.append("      throw new IllegalArgumentException(\"Value '\" + i["
-					+ m_Attribute.index() + "] + \"' is not allowed!\");\n");
+			buffer.append("      throw new IllegalArgumentException(\"Value '\" + i[" + m_Attribute.index() + "] + \"' is not allowed!\");\n");
 			buffer.append("  }\n");
 
 			// output subtree code
@@ -588,8 +579,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler,	Sour
 		result.append("class " + className + " {\n");
 		result.append("  private static void checkMissing(Object[] i, int index) {\n");
 		result.append("    if (i[index] == null)\n");
-		result.append("      throw new IllegalArgumentException(\"Null values "
-				+ "are not allowed!\");\n");
+		result.append("      throw new IllegalArgumentException(\"Null values " + "are not allowed!\");\n");
 		result.append("  }\n\n");
 		result.append("  public static double classify(Object[] i) {\n");
 		id = 0;
