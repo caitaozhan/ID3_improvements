@@ -186,7 +186,7 @@ public class ID3 extends Classifier implements TechnicalInformationHandler, Sour
 		for (int i = 0; i < m_forestSize; i++)        // build a random forest with m_forestSize trees
 		{
 			m_datas[i] = new Instances(data);
-			deleteSomeAttributes(m_datas[i], (int) ((data.numAttributes()) * 0.2));
+			deleteSomeAttributes(m_datas[i], (int) ((data.numAttributes()) * 0.3));
 
 			m_datas[i] = new Instances(m_datas[i]);  // 把 objects数组中的null元素去掉 
 			m_randomForest[i] = new ID3();
