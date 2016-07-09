@@ -1,14 +1,11 @@
 # ID3_improvements
-My improvments on ID3, a classic data mining algorithm
+My improvments on ID3(Iterative Dichotomiser 3), a classic data mining algorithmput forward by Quinlan in 1986. 
 
-ID3(Iterative Dichotomiser 3) is a classic decision tree algorithm put forward by Quinlan in 1986. 
+There are 4 branches in this repository:
 
-I will make three improvements on ID3:
+1. branch-master: the original ID3 algorithm implemented in Weka
+2. branch-gain_ratio: Change the original information gain to gain ratio when deciding which attribute to split the tree
+3. branch-naive_bayes: Change the simple voting procedure to naive bayes methods
+4. branch-random_forest: Build up a random forest from many ID3 trees
 
-1. Change the original information gain to gain ratio when deciding which attribute to split the tree
-
-2. Change the simple voting procedure to naive bayes methods
-
-3. Build up a random forest from many ID3 trees
-
-The projram is written in Java, and runs on Weka platform
+The projrams are secondary developments on Weka.
