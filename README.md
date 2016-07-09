@@ -1,6 +1,8 @@
 # ID3_improvements
 My improvments on ID3(Iterative Dichotomiser 3), a classic data mining algorithmput forward by Quinlan in 1986. 
 
+This is a course homework of pattern recongnition.
+
 There are 4 branches in this repository:
 
 1. branch-master: the original ID3 algorithm implemented in Weka
